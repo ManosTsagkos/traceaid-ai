@@ -1,0 +1,20 @@
+{
+  "id": "upstream-timeout",
+  "name": "Upstream request timeout",
+  "description": "A slow read reaches the client timeout before a response arrives.",
+  "category": "Connectivity",
+  "request": {
+    "method": "GET",
+    "url": "https://api.example.com/v1/reports/daily",
+    "headers": {
+      "Accept": "application/json"
+    },
+    "body": null
+  },
+  "observed": {
+    "error": "ReadTimeout: upstream did not respond",
+    "latency_ms": 8000
+  },
+  "execute_probe": false,
+  "use_ai": false
+}

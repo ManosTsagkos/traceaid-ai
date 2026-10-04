@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="TraceAid AI turns failed API requests into evidence-backed diagnoses, corrected code, and regression tests."
+    />
+    <meta name="theme-color" content="#07100f" />
+    <title>TraceAid AI — API incident diagnostician</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#workbench">Skip to diagnostic workbench</a>
+
+    <div class="ambient ambient-one" aria-hidden="true"></div>
+    <div class="ambient ambient-two" aria-hidden="true"></div>
+    <div class="grid-overlay" aria-hidden="true"></div>
+
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="TraceAid AI home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" role="img">
+            <path d="M5 16h6l2.2-5.5 4.2 12L20 16h7" />
+            <circle cx="16" cy="16" r="13" />
+          </svg>
+        </span>
+        <span>TraceAid <em>AI</em></span>
+      </a>
+
+      <nav class="main-nav" aria-label="Primary navigation">
+        <a href="#workbench">Workbench</a>
+        <a href="#examples">Cases</a>
+        <a href="#how-it-works">How it works</a>
+      </nav>
+
+      <div class="header-actions">
+        <span class="system-status" title="Diagnostic engine is available">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span class="status-label">Engine ready</span>
+        </span>
+        <a
+          class="icon-link"
+          href="https://github.com/ManosTsagkos/traceaid-ai"
+          target="_blank"
+          rel="noreferrer"
+          aria-label="View TraceAid AI on GitHub (opens in a new tab)"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.87c-2.78.6-3.37-1.18-3.37-1.18-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.35 1.09 2.92.83.09-.65.35-1.09.64-1.34-2.22-.25-4.56-1.11-4.56-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.6 9.6 0 0 1 12 6.82a9.6 9.6 0 0 1 2.5.34c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.77c0 .27.18.58.69.48A10 10 0 0 0 12 2Z" />
+          </svg>
+        </a>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="eyebrow"><span></span> API incident intelligence</p>
+          <h1 id="hero-title">
+            From failed request<br />
+            to <span class="gradient-text">working fix.</span>
+          </h1>
+          <p class="hero-lede">
+            Paste the evidence from a broken API call. TraceAid isolates the likely
+            cause, explains why, and generates repair templates for you to review.
+          </p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="#workbench">
+              Diagnose an incident
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m7 4 6 6-6 6" /></svg>
+            </a>
+            <button class="button button-ghost" id="hero-demo-button" type="button">
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6.5 4.5v11l8-5.5-8-5.5Z" /></svg>
+              Run a demo
+            </button>
+          </div>
+          <dl class="hero-stats" aria-label="TraceAid capabilities">
+            <div><dt>6</dt><dd>failure classes</dd></div>
+            <div><dt>&lt;2s</dt><dd>local analysis</dd></div>
+            <div><dt>3</dt><dd>code artifacts</dd></div>
+          </dl>
+        </div>
+
+        <div class="hero-visual" aria-hidden="true">
+          <div class="trace-card trace-card-back">
+            <span class="trace-line short"></span><span class="trace-line"></span>
+          </div>
+          <div class="trace-card trace-card-main">
+            <div class="trace-topbar">
+              <span class="window-dots"><i></i><i></i><i></i></span>
+              <span>incident.trace</span>
+              <span class="live-label">LIVE</span>
+            </div>
+            <div class="trace-request">
+              <span class="method-tag">POST</span>
+              <span>/v1/checkout/sessions</span>
+              <strong>401</strong>
+            </div>
+            <svg class="trace-wave" viewBox="0 0 520 112" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="waveFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#48f5c2" stop-opacity=".28" />
+                  <stop offset="1" stop-color="#48f5c2" stop-opacity="0" />
+                </linearGradient>
+              </defs>
+              <path class="wave-fill" d="M0 87 36 82 72 85 108 70 144 76 180 67 216 71 252 34 288 74 324 67 360 73 396 65 432 71 468 63 520 67V112H0Z" />
+              <path class="wave-line" d="M0 87 36 82 72 85 108 70 144 76 180 67 216 71 252 34 288 74 324 67 360 73 396 65 432 71 468 63 520 67" />
+              <line x1="252" y1="18" x2="252" y2="98" />
+            </svg>
+            <div class="trace-finding">
+              <span class="finding-icon">!</span>
+              <div>
+                <small>LIKELY ROOT CAUSE · 94% CONFIDENCE</small>
+                <strong>Expired bearer token</strong>
+                <p>The access token expired 18 minutes before this request.</p>
+              </div>
+            </div>
+            <div class="trace-repair"><span>✓</span> Corrected request generated</div>
+          </div>
+          <div class="orbit-badge orbit-one"><span>401</span> Auth</div>
+          <div class="orbit-badge orbit-two"><span>{ }</span> JSON</div>
+        </div>
+      </section>
+
+      <section class="workbench-section" id="workbench" aria-labelledby="workbench-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow"><span></span> Diagnostic workbench</p>
+            <h2 id="workbench-title">Reconstruct the failure</h2>
+          </div>
+          <p>Everything stays in this session. Secrets are redacted before analysis.</p>
+        </div>
+
+        <div class="workbench-grid">
+          <form class="request-panel panel" id="diagnosis-form" novalidate>
+            <div class="panel-header">
+              <div>
+                <span class="panel-index">01</span>
+                <div><h3>Request evidence</h3><p>Describe the call that failed.</p></div>
+              </div>
+              <button class="text-button" id="load-demo-button" type="button">
+                <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10a6 6 0 1 0 2-4.47M4 3v5h5" /></svg>
+                Load demo
+              </button>
+            </div>
+
+            <div class="form-body">
+              <div class="field request-line-field">
+                <label for="request-url">Request URL <span>required</span></label>
+                <div class="request-line">
+                  <label class="sr-only" for="request-method">HTTP method</label>
+                  <select id="request-method" name="method" aria-label="HTTP method">
+                    <option>GET</option>
+                    <option selected>POST</option>
+                    <option>PUT</option>
+                    <option>PATCH</option>
+                    <option>DELETE</option>
+                    <option>HEAD</option>
+                    <option>OPTIONS</option>
+                  </select>
+                  <input
+                    id="request-url"
+                    name="url"
+                    type="url"
+                    inputmode="url"
+                    autocomplete="url"
+                    spellcheck="false"
+                    placeholder="https://api.example.com/v1/resource"
+                    required
+                    aria-describedby="url-error"
+                  />
+                </div>
+                <p class="field-error" id="url-error" role="alert"></p>
+              </div>
+
+              <div class="editor-grid">
+                <div class="field code-field">
+                  <div class="field-label-row">
+                    <label for="request-headers">Request headers</label>
+                    <span>JSON object</span>
+                  </div>
+                  <div class="code-editor">
+                    <div class="editor-bar"><span>headers.json</span><span class="validity-indicator" id="headers-validity">valid</span></div>
+                    <textarea
+                      id="request-headers"
+                      name="headers"
+                      rows="7"
+                      spellcheck="false"
+                      aria-describedby="headers-error"
+                    >{
+  "Content-Type": "application/json"
+}</textarea>
+                  </div>
+                  <p class="field-error" id="headers-error" role="alert"></p>
+                </div>
+
+                <div class="field code-field">
+                  <div class="field-label-row">
+                    <label for="request-body">Request body</label>
+                    <span>JSON · optional</span>
+                  </div>
+                  <div class="code-editor">
+                    <div class="editor-bar"><span>body.json</span><span class="validity-indicator" id="body-validity">valid</span></div>
+                    <textarea
+                      id="request-body"
+                      name="body"
+                      rows="7"
+                      spellcheck="false"
+                      aria-describedby="body-error"
+                      placeholder="{&#10;  &quot;key&quot;: &quot;value&quot;&#10;}"
+                    ></textarea>
+                  </div>
+                  <p class="field-error" id="body-error" role="alert"></p>
+                </div>
+              </div>
+
+              <details class="observed-details" id="observed-details">
+                <summary>
+                  <span class="summary-icon" aria-hidden="true">+</span>
+                  <span><strong>Add observed response</strong><small>Status, response body, or runtime error improves accuracy.</small></span>
+                  <span class="optional-badge">Optional</span>
+                </summary>
+                <div class="observed-content">
+                  <div class="compact-fields">
+                    <div class="field">
+                      <label for="status-code">Status code</label>
+                      <input id="status-code" name="status_code" type="number" min="100" max="599" inputmode="numeric" placeholder="401" />
+                    </div>
+                    <div class="field">
+                      <label for="latency-ms">Latency</label>
+                      <div class="input-suffix"><input id="latency-ms" name="latency_ms" type="number" min="0" step="1" placeholder="842" /><span>ms</span></div>
+                    </div>
+                  </div>
+                  <div class="field">
+                    <label for="observed-error">Runtime error</label>
+                    <input id="observed-error" name="error" type="text" spellcheck="false" placeholder="e.g. ReadTimeout: upstream did not respond" />
+                  </div>
+                  <div class="editor-grid">
+                    <div class="field code-field">
+                      <div class="field-label-row"><label for="response-headers">Response headers</label><span>JSON object</span></div>
+                      <div class="code-editor compact-editor"><div class="editor-bar"><span>response.headers</span></div><textarea id="response-headers" rows="5" spellcheck="false" placeholder="{ }"></textarea></div>
+                      <p class="field-error" id="response-headers-error" role="alert"></p>
+                    </div>
+                    <div class="field code-field">
+                      <div class="field-label-row"><label for="response-body">Response body</label><span>JSON or text</span></div>
+                      <div class="code-editor compact-editor"><div class="editor-bar"><span>response.body</span></div><textarea id="response-body" rows="5" spellcheck="false" placeholder="{ }"></textarea></div>
+                    </div>
+                  </div>
+                </div>
+              </details>
+
+              <div class="analysis-options">
+                <label class="toggle-row">
+                  <input id="execute-probe" type="checkbox" />
+                  <span class="toggle" aria-hidden="true"></span>
+                  <span><strong>Bounded live probe</strong><small>Replay this request with strict timeout and response limits.</small></span>
+                </label>
+                <label class="toggle-row">
+                  <input id="use-ai" type="checkbox" />
+                  <span class="toggle" aria-hidden="true"></span>
+                  <span><strong>AI-assisted reasoning</strong><small>Use the configured LLM provider for deeper analysis.</small></span>
+                </label>
+              </div>
+
+              <div class="form-footer">
+                <p><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 9V7a5 5 0 0 1 10 0v2M4 9h12v8H4Z" /></svg> Authorization values are masked in reports.</p>
+                <button class="button button-primary analyze-button" id="analyze-button" type="submit">
+                  <span>Analyze incident</span>
+                  <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 10h12M11 5l5 5-5 5" /></svg>
+                </button>
+              </div>
+            </div>
+          </form>
+
+          <section class="results-panel panel" id="results-panel" aria-labelledby="results-title" aria-live="polite">
+            <div class="panel-header results-header">
+              <div>
+                <span class="panel-index">02</span>
+                <div><h3 id="results-title">Diagnosis</h3><p>Evidence, cause, and repair plan.</p></div>
+              </div>
+              <span class="result-mode" id="result-mode" hidden>Deterministic</span>
+            </div>
+
+            <div class="empty-state" id="empty-state">
+              <div class="scanner" aria-hidden="true">
+                <span class="scanner-ring ring-one"></span><span class="scanner-ring ring-two"></span><span class="scanner-ring ring-three"></span>
+                <svg viewBox="0 0 52 52"><path d="M9 26h10l3.5-9 7 20 4-11H43" /></svg>
+              </div>
+              <p class="empty-kicker">Awaiting trace</p>
+              <h3>Your diagnosis will appear here</h3>
+              <p>Add a failed request or load the demo incident to see TraceAid isolate the root cause.</p>
+              <button class="text-button empty-demo-button" type="button" id="empty-demo-button">Use sample incident <span>→</span></button>
+              <div class="empty-signals" aria-hidden="true"><span>AUTH</span><span>SCHEMA</span><span>RATE LIMIT</span><span>TIMEOUT</span></div>
+            </div>
+
+            <div class="progress-state" id="progress-state" hidden>
+              <div class="progress-orb" aria-hidden="true"><span></span><i></i></div>
+              <p class="empty-kicker">Tracing failure path</p>
+              <h3 id="progress-title">Parsing request evidence…</h3>
+              <div class="progress-track"><span id="progress-bar"></span></div>
+              <ol class="progress-steps" id="progress-steps">
+                <li data-step="0"><span></span> Normalize request</li>
+                <li data-step="1"><span></span> Match failure signatures</li>
+                <li data-step="2"><span></span> Rank likely causes</li>
+                <li data-step="3"><span></span> Generate repair artifacts</li>
+              </ol>
+            </div>
+
+            <div class="error-state" id="error-state" hidden>
+              <span class="error-icon" aria-hidden="true">!</span>
+              <p class="empty-kicker">Analysis interrupted</p>
+              <h3>We could not complete this trace</h3>
+              <p id="error-message">Check the request and try again.</p>
+              <button class="button button-ghost" id="retry-button" type="button">Retry analysis</button>
+            </div>
+
+            <div class="result-content" id="result-content" hidden>
+              <div class="fallback-notice" id="fallback-notice" hidden>
+                <span>i</span><p><strong>Prepared demo</strong> — A sample report generated by the Python rules engine.</p>
+              </div>
+
+              <div class="triage-card">
+                <div class="triage-meta">
+                  <span class="severity-badge" id="severity-badge">HIGH</span>
+                  <span class="trace-id" id="trace-id">TRC-000000</span>
+                  <span class="timestamp" id="result-time">just now</span>
+                </div>
+                <h3 id="diagnosis-title">Authentication failure</h3>
+                <p id="diagnosis-summary"></p>
+                <div class="confidence-row">
+                  <div><span>Diagnostic confidence</span><strong id="confidence-value">0%</strong></div>
+                  <div class="confidence-track" role="meter" aria-label="Diagnostic confidence" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="confidence-meter"><span id="confidence-bar"></span></div>
+                </div>
+              </div>
+
+              <section class="finding-section" aria-labelledby="root-cause-heading">
+                <div class="result-section-title"><span>01</span><h4 id="root-cause-heading">Likely root cause</h4></div>
+                <div class="root-cause-card">
+                  <span class="root-icon" aria-hidden="true">⌁</span>
+                  <p id="likely-cause"></p>
+                </div>
+              </section>
+
+              <section class="finding-section" aria-labelledby="evidence-heading">
+                <div class="result-section-title"><span>02</span><h4 id="evidence-heading">Supporting evidence</h4></div>
+                <ul class="evidence-list" id="evidence-list"></ul>
+              </section>
+
+              <section class="finding-section" aria-labelledby="fixes-heading">
+                <div class="result-section-title"><span>03</span><h4 id="fixes-heading">Recommended fix</h4></div>
+                <ol class="fix-list" id="fix-list"></ol>
+              </section>
+
+              <section class="artifacts-section" aria-labelledby="artifacts-heading">
+                <div class="result-section-title"><span>04</span><h4 id="artifacts-heading">Repair artifacts</h4></div>
+                <div class="code-tabs">
+                  <div class="tab-bar" role="tablist" aria-label="Generated code">
+                    <button id="tab-curl" role="tab" aria-selected="true" aria-controls="panel-curl" data-artifact="curl" type="button">cURL</button>
+                    <button id="tab-python" role="tab" aria-selected="false" aria-controls="panel-python" data-artifact="python" tabindex="-1" type="button">Python</button>
+                    <button id="tab-pytest" role="tab" aria-selected="false" aria-controls="panel-pytest" data-artifact="pytest" tabindex="-1" type="button">pytest</button>
+                    <button class="copy-button" id="copy-code-button" type="button" aria-label="Copy current code to clipboard">
+                      <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="7" y="7" width="9" height="9" rx="1" /><path d="M13 7V4H4v9h3" /></svg>
+                      <span>Copy</span>
+                    </button>
+                  </div>
+                  <div class="code-output" id="panel-curl" role="tabpanel" aria-labelledby="tab-curl"><pre><code id="artifact-curl"></code></pre></div>
+                  <div class="code-output" id="panel-python" role="tabpanel" aria-labelledby="tab-python" hidden><pre><code id="artifact-python"></code></pre></div>
+                  <div class="code-output" id="panel-pytest" role="tabpanel" aria-labelledby="tab-pytest" hidden><pre><code id="artifact-pytest"></code></pre></div>
+                </div>
+              </section>
+
+              <div class="export-row">
+                <span>Export diagnosis</span>
+                <button class="export-button" id="export-json" type="button"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6 3H3v14h3M14 3h3v14h-3M8 7l4 3-4 3" /></svg> JSON</button>
+                <button class="export-button" id="export-markdown" type="button"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h14v10H3ZM6 12V8l2 2 2-2v4M12 10l2 2 2-2" /></svg> Markdown</button>
+              </div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="examples-section" id="examples" aria-labelledby="examples-title">
+        <div class="section-heading">
+          <div><p class="eyebrow"><span></span> Incident library</p><h2 id="examples-title">Explore common failure patterns</h2></div>
+          <p>Load a sanitized case, inspect its evidence, and see how TraceAid reasons.</p>
+        </div>
+        <div class="example-grid" id="example-grid" aria-live="polite">
+          <div class="example-skeleton"></div><div class="example-skeleton"></div><div class="example-skeleton"></div>
+        </div>
+      </section>
+
+      <section class="how-section" id="how-it-works" aria-labelledby="how-title">
+        <div class="how-intro">
+          <p class="eyebrow"><span></span> Explainable by design</p>
+          <h2 id="how-title">No black-box<br />guesswork.</h2>
+          <p>Every diagnosis connects the observed signal to an actionable repair. Use deterministic rules locally or opt into AI-assisted reasoning.</p>
+        </div>
+        <ol class="how-steps">
+          <li><span>01</span><div><h3>Normalize</h3><p>Parse the request, response, and runtime context into a safe incident trace.</p></div></li>
+          <li><span>02</span><div><h3>Correlate</h3><p>Match status codes, headers, payloads, and errors against known failure signatures.</p></div></li>
+          <li><span>03</span><div><h3>Repair</h3><p>Return evidence-backed fixes, corrected requests, Python code, and a regression test.</p></div></li>
+        </ol>
+      </section>
+    </main>
+
+    <footer>
+      <a class="brand footer-brand" href="#top"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M5 16h6l2.2-5.5 4.2 12L20 16h7" /><circle cx="16" cy="16" r="13" /></svg></span><span>TraceAid <em>AI</em></span></a>
+      <p>Built with Python, FastAPI, and explainable diagnostics.</p>
+      <p class="footer-note"><a href="https://github.com/ManosTsagkos/traceaid-ai" target="_blank" rel="noreferrer">View source ↗</a> · <span id="footer-year"></span></p>
+    </footer>
+
+    <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+    <script src="/static/app.js" defer></script>
+  </body>
+</html>

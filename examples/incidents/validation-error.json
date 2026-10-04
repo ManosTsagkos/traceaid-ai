@@ -1,0 +1,49 @@
+{
+  "id": "validation-error",
+  "name": "Payload validation failure",
+  "description": "A JSON payload has the wrong types and a missing field.",
+  "category": "Validation",
+  "request": {
+    "method": "POST",
+    "url": "https://api.example.com/v1/users",
+    "headers": {
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+      "X-API-Key": "demo-secret-key"
+    },
+    "body": {
+      "email": "not-an-email",
+      "age": "twenty eight"
+    }
+  },
+  "observed": {
+    "status_code": 422,
+    "headers": {
+      "content-type": "application/json"
+    },
+    "body": {
+      "detail": [
+        {
+          "loc": [
+            "body",
+            "email"
+          ],
+          "msg": "value is not a valid email",
+          "type": "value_error.email"
+        },
+        {
+          "loc": [
+            "body",
+            "name"
+          ],
+          "msg": "field required",
+          "type": "missing"
+        }
+      ]
+    },
+    "latency_ms": 96,
+    "error": null
+  },
+  "execute_probe": false,
+  "use_ai": false
+}

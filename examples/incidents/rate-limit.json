@@ -1,0 +1,31 @@
+{
+  "id": "rate-limit",
+  "name": "Rate limit exceeded",
+  "description": "A third-party API throttles a burst and returns retry guidance.",
+  "category": "Resilience",
+  "request": {
+    "method": "GET",
+    "url": "https://api.example.com/v1/search?q=observability",
+    "headers": {
+      "Accept": "application/json",
+      "X-API-Key": "demo-secret-key"
+    },
+    "body": null
+  },
+  "observed": {
+    "status_code": 429,
+    "headers": {
+      "content-type": "application/json",
+      "retry-after": "30",
+      "x-ratelimit-remaining": "0"
+    },
+    "body": {
+      "error": "rate_limit_exceeded",
+      "message": "Retry after 30 seconds"
+    },
+    "latency_ms": 71,
+    "error": null
+  },
+  "execute_probe": false,
+  "use_ai": false
+}

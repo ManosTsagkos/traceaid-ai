@@ -1,0 +1,27 @@
+{
+  "id": "wrong-method",
+  "name": "Wrong HTTP method",
+  "description": "A read-only endpoint rejects POST and declares the supported method.",
+  "category": "Request contract",
+  "request": {
+    "method": "POST",
+    "url": "https://api.example.com/v1/status",
+    "headers": {
+      "Accept": "application/json"
+    },
+    "body": null
+  },
+  "observed": {
+    "status_code": 405,
+    "headers": {
+      "allow": "GET",
+      "content-type": "application/json"
+    },
+    "body": {
+      "error": "method_not_allowed"
+    },
+    "latency_ms": 41
+  },
+  "execute_probe": false,
+  "use_ai": false
+}

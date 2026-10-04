@@ -1,0 +1,8 @@
+# Default reviewer for all project changes.
+* @ManosTsagkos
+
+# Security-sensitive surfaces.
+/src/traceaid/services/redaction.py @ManosTsagkos
+/src/traceaid/services/url_security.py @ManosTsagkos
+/src/traceaid/services/probe.py @ManosTsagkos
+/.github/workflows/ @ManosTsagkos

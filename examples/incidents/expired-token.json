@@ -1,0 +1,30 @@
+{
+  "id": "expired-token",
+  "name": "Expired bearer token",
+  "description": "A protected endpoint rejects an expired access token.",
+  "category": "Authentication",
+  "request": {
+    "method": "GET",
+    "url": "https://api.example.com/v1/projects",
+    "headers": {
+      "Accept": "application/json",
+      "Authorization": "Bearer demo-expired-token"
+    },
+    "body": null
+  },
+  "observed": {
+    "status_code": 401,
+    "headers": {
+      "content-type": "application/json",
+      "www-authenticate": "Bearer error=\"invalid_token\""
+    },
+    "body": {
+      "error": "invalid_token",
+      "message": "The access token expired"
+    },
+    "latency_ms": 184,
+    "error": null
+  },
+  "execute_probe": false,
+  "use_ai": false
+}

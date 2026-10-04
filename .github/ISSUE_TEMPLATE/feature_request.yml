@@ -1,0 +1,35 @@
+name: Feature request
+description: Suggest an improvement to TraceAid's diagnosis or developer workflow.
+title: "[Feature]: "
+labels: [enhancement, triage]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: Which developer problem or failure mode should TraceAid address?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Describe the expected input, result, and interface.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+
+  - type: checkboxes
+    id: impact
+    attributes:
+      label: Security and compatibility
+      options:
+        - label: This changes live outbound request behavior.
+        - label: This sends new data to an AI provider.
+        - label: This changes the public API contract.
+        - label: None of the above.

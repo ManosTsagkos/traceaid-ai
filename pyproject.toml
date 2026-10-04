@@ -1,0 +1,137 @@
+[build-system]
+requires = ["hatchling>=1.26,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "traceaid-ai"
+version = "0.1.0"
+description = "Privacy-aware diagnostics for failed REST API calls, powered by deterministic rules and optional AI."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+authors = [
+  { name = "Manos Tsagkos" },
+]
+keywords = ["api", "diagnostics", "fastapi", "llm", "openai", "rest"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Framework :: FastAPI",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Topic :: Software Development :: Debuggers",
+]
+dependencies = [
+  "fastapi>=0.115,<1",
+  "httpx>=0.27,<1",
+  "openai>=1.73,<3",
+  "pydantic>=2.9,<3",
+  "pydantic-settings>=2.6,<3",
+  "python-dotenv>=1.0,<2",
+  "uvicorn[standard]>=0.32,<1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "build>=1.2,<2",
+  "mypy>=1.13,<2",
+  "pip-audit>=2.7,<3",
+  "pytest>=9.0.3,<10",
+  "pytest-asyncio>=1.2,<2",
+  "pytest-cov>=6,<8",
+  "respx>=0.22,<1",
+  "ruff>=0.8,<1",
+]
+
+[project.scripts]
+traceaid = "traceaid.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/ManosTsagkos/traceaid-ai"
+Repository = "https://github.com/ManosTsagkos/traceaid-ai"
+Issues = "https://github.com/ManosTsagkos/traceaid-ai/issues"
+Demo = "https://manostsagkos.github.io/traceaid-ai/"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/traceaid"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "/src",
+  "/tests",
+  "/README.md",
+  "/LICENSE",
+  "/.github",
+  "/.env.example",
+  "/CONTRIBUTING.md",
+  "/Dockerfile",
+  "/docker-compose.yml",
+  "/docs",
+  "/examples",
+  "/Makefile",
+  "/package.json",
+  "/package-lock.json",
+  "/playwright.config.js",
+  "/scripts",
+  "/SECURITY.md",
+]
+
+[tool.pytest.ini_options]
+addopts = "--strict-config --strict-markers --cov=traceaid --cov-report=term-missing"
+asyncio_mode = "auto"
+testpaths = ["tests"]
+markers = [
+  "unit: fast, isolated tests",
+  "integration: tests across application boundaries",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["traceaid"]
+
+[tool.coverage.report]
+exclude_also = [
+  "if TYPE_CHECKING:",
+  "if __name__ == .__main__.:",
+  "raise NotImplementedError",
+]
+show_missing = true
+skip_covered = true
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "S", "RUF"]
+ignore = ["E501", "S104"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/traceaid/services/curl_parser.py" = ["S105"]
+"tests/**/*.py" = ["S101", "S105", "S106"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+
+[tool.mypy]
+python_version = "3.11"
+files = ["src"]
+check_untyped_defs = true
+disallow_any_generics = true
+disallow_incomplete_defs = true
+disallow_untyped_defs = true
+no_implicit_optional = true
+pretty = true
+show_error_codes = true
+warn_redundant_casts = true
+warn_return_any = true
+warn_unreachable = true
+warn_unused_configs = true
+
+[[tool.mypy.overrides]]
+module = "openai.*"
+ignore_missing_imports = true

@@ -1,0 +1,23 @@
+services:
+  traceaid:
+    build:
+      context: .
+    ports:
+      - "8000:8000"
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+      TRACEAID_ENABLE_LIVE_PROBES: ${TRACEAID_ENABLE_LIVE_PROBES:-false}
+      TRACEAID_REQUEST_TIMEOUT_SECONDS: ${TRACEAID_REQUEST_TIMEOUT_SECONDS:-8}
+      TRACEAID_MAX_RESPONSE_BYTES: ${TRACEAID_MAX_RESPONSE_BYTES:-262144}
+      TRACEAID_ALLOWED_ORIGINS: ${TRACEAID_ALLOWED_ORIGINS:-http://localhost:8000}
+      TRACEAID_LOG_LEVEL: ${TRACEAID_LOG_LEVEL:-INFO}
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped

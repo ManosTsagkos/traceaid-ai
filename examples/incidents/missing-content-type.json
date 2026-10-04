@@ -1,0 +1,30 @@
+{
+  "id": "missing-content-type",
+  "name": "Missing JSON content type",
+  "description": "An otherwise valid JSON request uses the wrong media type.",
+  "category": "Content negotiation",
+  "request": {
+    "method": "POST",
+    "url": "https://api.example.com/v1/orders",
+    "headers": {
+      "Accept": "application/json"
+    },
+    "body": {
+      "product_id": "sku_123",
+      "quantity": 1
+    }
+  },
+  "observed": {
+    "status_code": 415,
+    "headers": {
+      "content-type": "application/json"
+    },
+    "body": {
+      "error": "unsupported_media_type",
+      "expected": "application/json"
+    },
+    "latency_ms": 58
+  },
+  "execute_probe": false,
+  "use_ai": false
+}
