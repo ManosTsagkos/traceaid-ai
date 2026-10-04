@@ -1,7 +1,9 @@
 import json
 from types import SimpleNamespace
 
+import httpx
 import pytest
+import respx
 
 from traceaid.config import Settings
 from traceaid.models import Diagnosis, IncidentRequest, ObservedResponse, RequestSpec, Severity
@@ -49,6 +51,42 @@ def test_generators_are_secret_free_and_python_is_valid() -> None:
     assert "TRACEAID_AUTHORIZATION" in snippet
     compile(snippet, "generated_snippet.py", "exec")
     compile(test_code, "generated_test.py", "exec")
+
+
+@pytest.mark.parametrize(
+    ("response", "expected_output"),
+    [
+        (httpx.Response(204), "HTTP 204 (empty response)"),
+        (httpx.Response(200, text="healthy"), "healthy"),
+        (httpx.Response(200, json={"ok": True}), "{'ok': True}"),
+    ],
+)
+def test_generated_python_handles_successful_response_formats(
+    response: httpx.Response, expected_output: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    request = RequestSpec(method="GET", url="https://api.example.com/health")
+    with respx.mock(assert_all_called=True, assert_all_mocked=True) as router:
+        router.get(request.url).mock(return_value=response)
+        exec(compile(generate_python_snippet(request), "snippet.py", "exec"), {})  # noqa: S102
+    assert capsys.readouterr().out.strip() == expected_output
+
+
+@pytest.mark.parametrize(("status_code", "successful"), [(204, True), (302, False)])
+def test_generated_regression_requires_success_instead_of_accepting_redirects(
+    status_code: int, successful: bool
+) -> None:
+    request = RequestSpec(method="GET", url="https://api.example.com/health")
+    namespace: dict[str, object] = {}
+    exec(compile(generate_pytest_test(request), "regression.py", "exec"), namespace)  # noqa: S102
+    test_function = namespace["test_corrected_api_request_regression"]
+    assert callable(test_function)
+    with respx.mock(assert_all_called=True, assert_all_mocked=True) as router:
+        router.get(request.url).mock(return_value=httpx.Response(status_code))
+        if successful:
+            test_function()
+        else:
+            with pytest.raises(AssertionError):
+                test_function()
 
 
 @pytest.mark.asyncio

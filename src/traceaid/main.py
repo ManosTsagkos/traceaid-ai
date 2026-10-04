@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 import logging
+import secrets
 import time
 from pathlib import Path
 from uuid import uuid4
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from traceaid import __version__
@@ -37,8 +39,8 @@ def create_app() -> FastAPI:
             "optional structured LLM analysis, and executable regression artifacts."
         ),
         version=__version__,
-        docs_url="/docs",
-        redoc_url="/redoc",
+        docs_url=None,
+        redoc_url=None,
         openapi_url="/api/openapi.json",
     )
     application.add_middleware(
@@ -52,6 +54,18 @@ def create_app() -> FastAPI:
     @application.middleware("http")
     async def request_context(request: Request, call_next):  # type: ignore[no-untyped-def]
         request_id = request.headers.get("X-Request-ID", str(uuid4()))
+        # ASGI mounts retain the public prefix in path; a proxy may have
+        # already stripped it. Match the same route-relative path in both
+        # cases, and only remove a prefix at a complete path boundary.
+        route_path: str = request.scope["path"]
+        root_path: str = request.scope.get("root_path", "")
+        if root_path and route_path == root_path:
+            route_path = ""
+        elif root_path and route_path.startswith(f"{root_path}/"):
+            route_path = route_path[len(root_path) :]
+        documentation = route_path in {"/docs", "/redoc"}
+        if documentation:
+            request.state.csp_nonce = secrets.token_urlsafe(24)
         started = time.perf_counter()
         try:
             response = await call_next(request)
@@ -76,9 +90,41 @@ def create_app() -> FastAPI:
             "img-src 'self' data:; connect-src 'self'; font-src 'self'; "
             "object-src 'none'; base-uri 'none'; frame-ancestors 'none'"
         )
+        if documentation:
+            # The API documentation loads FastAPI's CDN assets. Authorize its
+            # bootstrap with a fresh nonce; keep the application policy strict.
+            response.headers["Content-Security-Policy"] = (
+                "default-src 'self'; "
+                "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+                f"script-src 'self' 'nonce-{request.state.csp_nonce}' https://cdn.jsdelivr.net; "
+                "img-src 'self' data: https://fastapi.tiangolo.com; "
+                "connect-src 'self'; font-src 'self'; "
+                "object-src 'none'; base-uri 'none'; frame-ancestors 'none'"
+            )
         return response
 
     application.include_router(router)
+
+    @application.get("/docs", include_in_schema=False)
+    async def swagger_documentation(request: Request) -> HTMLResponse:
+        response = get_swagger_ui_html(
+            openapi_url=f"{request.scope.get('root_path', '')}/api/openapi.json",
+            title="TraceAid AI - Swagger UI",
+        )
+        html = (
+            bytes(response.body)
+            .decode("utf-8")
+            .replace("<script>", f'<script nonce="{request.state.csp_nonce}">')
+        )
+        return HTMLResponse(html)
+
+    @application.get("/redoc", include_in_schema=False)
+    async def redoc_documentation(request: Request) -> HTMLResponse:
+        return get_redoc_html(
+            openapi_url=f"{request.scope.get('root_path', '')}/api/openapi.json",
+            title="TraceAid AI - ReDoc",
+            with_google_fonts=False,
+        )
 
     @application.get("/api/health", tags=["operations"])
     async def health() -> dict[str, str]:

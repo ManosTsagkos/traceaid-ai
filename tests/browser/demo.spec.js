@@ -138,3 +138,36 @@ test("local invalid JSON is caught before submitting", async ({ page }) => {
   await expect(page.locator("#request-headers")).toHaveAttribute("aria-invalid", "true");
   await expect(page.locator("#result-content")).toBeHidden();
 });
+
+test("API docs bootstrap and fetch OpenAPI under their real security policy", async ({ page }) => {
+  // Keep CI offline while exercising the actual CDN allow-list and inline
+  // nonce. Rendering internals of Swagger's third-party bundle are out of scope.
+  await page.route("https://cdn.jsdelivr.net/**", async route => {
+    if (route.request().url().endsWith(".css")) {
+      await route.fulfill({ contentType: "text/css", body: "body { margin: 0; }" });
+      return;
+    }
+    await route.fulfill({
+      contentType: "application/javascript",
+      body: `
+        window.SwaggerUIBundle = function (options) {
+          fetch(options.url).then(response => response.json()).then(schema => {
+            const container = document.querySelector(options.dom_id);
+            container.textContent = schema.info.title;
+            container.dataset.paths = Object.keys(schema.paths).join(" ");
+          });
+          return {};
+        };
+        window.SwaggerUIBundle.presets = { apis: {} };
+        window.SwaggerUIBundle.SwaggerUIStandalonePreset = {};
+      `
+    });
+  });
+  await page.route("https://fastapi.tiangolo.com/**", route => route.fulfill({ status: 204 }));
+  const errors = [];
+  page.on("pageerror", error => errors.push(error.message));
+  await page.goto(`${liveUrl}/docs`);
+  await expect(page.locator("#swagger-ui")).toHaveText("TraceAid AI");
+  await expect(page.locator("#swagger-ui")).toHaveAttribute("data-paths", /\/api\/v1\/diagnose/);
+  expect(errors).toEqual([]);
+});

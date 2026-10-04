@@ -1,5 +1,9 @@
 """End-to-end API contract tests using the credential-free rules pipeline."""
 
+import re
+
+import pytest
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from traceaid.main import create_app
@@ -18,6 +22,60 @@ def test_health_and_metadata() -> None:
     metadata = client.get("/api/v1/meta")
     assert metadata.status_code == 200
     assert "secret-redaction" in metadata.json()["capabilities"]
+
+
+@pytest.mark.parametrize("path", ["/docs", "/redoc"])
+@pytest.mark.parametrize(
+    ("root_path", "mount_path", "request_prefix"),
+    [
+        ("", "", ""),
+        ("", "/traceaid", "/traceaid"),
+        ("/traceaid", "", "/traceaid"),
+        ("/traceaid", "", ""),
+        ("/gateway", "/traceaid", "/gateway/traceaid"),
+    ],
+    ids=["standalone", "mounted", "proxy-prefix", "proxy-stripped", "proxy-and-mount"],
+)
+def test_api_documentation_allows_its_assets_without_weakening_application_csp(
+    path: str, root_path: str, mount_path: str, request_prefix: str
+) -> None:
+    application = create_app()
+    if mount_path:
+        parent = FastAPI()
+        parent.mount(mount_path, application)
+        application = parent
+    documentation_client = TestClient(application, root_path=root_path)
+    public_path = f"{request_prefix}{path}"
+    response = documentation_client.get(public_path)
+    assert response.status_code == 200
+    assert "https://cdn.jsdelivr.net" in response.text
+    openapi_path = f"{root_path}{mount_path}/api/openapi.json"
+    assert openapi_path in response.text
+    schema_response = documentation_client.get(openapi_path)
+    assert schema_response.status_code == 200
+    assert "/api/v1/diagnose" in schema_response.json()["paths"]
+    policy = response.headers["content-security-policy"]
+    script_policy = next(
+        item for item in policy.split(";") if item.strip().startswith("script-src")
+    )
+    assert "https://cdn.jsdelivr.net" in script_policy
+    assert "'unsafe-inline'" not in script_policy
+    if path == "/docs":
+        nonce = re.search(r'<script nonce="([^"]+)">', response.text)
+        assert nonce is not None
+        assert f"'nonce-{nonce.group(1)}'" in script_policy
+        assert documentation_client.get(public_path).headers["content-security-policy"] != policy
+    assert "fonts.googleapis.com" not in response.text
+    for application_path in ("/", "/api/health", "/api/openapi.json"):
+        application_response = documentation_client.get(f"{request_prefix}{application_path}")
+        assert application_response.status_code == 200
+        strict_policy = application_response.headers["content-security-policy"]
+        assert "cdn.jsdelivr.net" not in strict_policy
+        assert "'unsafe-inline'" not in strict_policy
+    for lookalike_path in ("/docs-extra", "/docs/other", "/redoc-extra"):
+        missing = documentation_client.get(f"{request_prefix}{lookalike_path}")
+        assert missing.status_code == 404
+        assert "cdn.jsdelivr.net" not in missing.headers["content-security-policy"]
 
 
 def test_examples_can_run_through_real_pipeline() -> None:

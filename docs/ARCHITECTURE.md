@@ -23,7 +23,7 @@ flowchart LR
 sequenceDiagram
     actor Developer
     participant API as FastAPI
-    participant Guard as Validation + redaction
+    participant Guard as Validation + normalization
     participant Probe as Safe HTTP probe
     participant Rules as Rule engine
     participant AI as AI adapter
@@ -31,19 +31,19 @@ sequenceDiagram
 
     Developer->>API: IncidentRequest
     API->>Guard: Validate and normalize
-    Guard-->>API: Redacted RequestSpec
+    Guard-->>API: Normalized IncidentRequest
     opt execute_probe requested and enabled
         API->>Probe: Policy-approved request
         Probe-->>API: Bounded ObservedResponse
     end
-    API->>Rules: Redacted request + observed evidence
-    Rules-->>API: Explainable baseline diagnosis
+    API->>Rules: Request + observed evidence
+    Rules-->>API: Baseline with redacted evidence
     opt use_ai requested and configured
         API->>AI: Minimized redacted evidence + output schema
         AI-->>API: Validated enrichment or controlled failure
     end
-    API->>Output: Final diagnosis
-    Output-->>Developer: JSON + curl/Python/pytest/Markdown
+    API->>Output: Diagnosis + evidence-supported correction
+    Output-->>Developer: Redacted JSON + curl/Python/pytest/Markdown
 ```
 
 ## Components
@@ -59,6 +59,8 @@ Structured input and parsed `curl` commands converge on `RequestSpec`. Normaliza
 ### Redaction boundary
 
 Redaction occurs before evidence is written to a report, log, or provider prompt. Header names such as `Authorization`, `Cookie`, and `X-API-Key`, plus common token-like values in nested bodies and query parameters, are masked recursively.
+
+The submitted request remains in memory for the duration of diagnosis: an explicitly enabled probe needs its original headers to reproduce the request. The rule engine redacts displayed evidence, the AI adapter redacts its prompt, and artifact/report renderers redact their own output. Redaction is an output boundary; it does not silently replace the credential before an authorized probe.
 
 Redaction is defense in depth, not a data-loss-prevention guarantee. Logs avoid raw request bodies, and users are warned to review exports before sharing.
 
@@ -98,6 +100,12 @@ The final report feeds side-effect-free renderers for:
 - native JSON API response.
 
 Renderers operate on the redacted request and recommended fix. Generated code is a starting point and must be reviewed before execution.
+
+Python templates handle successful JSON, plain-text, and empty responses without assuming every endpoint returns JSON. Regression tests execute the generated templates against mocked HTTP rather than checking only their text or syntax.
+
+### Documentation security policy
+
+The workbench and API responses use a same-origin content security policy. Only `/docs` and `/redoc` permit FastAPI's documentation assets from `cdn.jsdelivr.net` and its favicon host. Swagger's inline bootstrap receives a fresh per-response nonce; inline scripts are not generally allowed. Documentation styles permit inline rules because the documentation renderers generate them, while the workbench keeps its stricter policy. ReDoc's optional Google Fonts request is disabled.
 
 ## Core design decisions
 

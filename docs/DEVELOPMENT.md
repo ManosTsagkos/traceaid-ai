@@ -127,6 +127,20 @@ docker compose up
 
 Verify the health endpoint, then confirm that the process runs as the non-root `traceaid` user and the application still works with the read-only filesystem.
 
+## Installed-package check
+
+The source tests use an editable installation. Verify distribution contents separately before release:
+
+```bash
+python -m build
+python -m venv /tmp/traceaid-wheel
+/tmp/traceaid-wheel/bin/python -m pip install dist/*.whl
+/tmp/traceaid-wheel/bin/python -m pip check
+/tmp/traceaid-wheel/bin/python scripts/check-installed.py
+```
+
+On Windows, create the environment in a temporary directory and use its `Scripts/python.exe` path; pass the built wheel's explicit path to `pip install`. `check-installed.py` rejects source/editable imports and checks the installed API, browser assets, CLI, and prepared demo from a temporary working directory. The packaging CI job runs this check on every push and pull request.
+
 ## Release checklist
 
 1. Run `make check` and `pip-audit`.

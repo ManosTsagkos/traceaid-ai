@@ -82,7 +82,12 @@ def generate_python_snippet(request: RequestSpec) -> str:
             "",
             f"response = httpx.request({', '.join(arguments)})",
             "response.raise_for_status()",
-            "print(response.json())",
+            "if not response.content:",
+            '    print(f"HTTP {response.status_code} (empty response)")',
+            'elif "json" in response.headers.get("Content-Type", "").lower():',
+            "    print(response.json())",
+            "else:",
+            "    print(response.text)",
         ]
     )
     return "\n".join(lines) + "\n"
@@ -124,7 +129,7 @@ def generate_pytest_test(
         "    with httpx.Client(timeout=8.0, follow_redirects=False) as client:",
         f"        response = client.request({', '.join(call_arguments)})",
         "",
-        "    assert response.status_code < 400, response.text[:500]",
+        "    assert 200 <= response.status_code < 300, response.text[:500]",
     ]
     return "\n".join(lines) + "\n"
 
