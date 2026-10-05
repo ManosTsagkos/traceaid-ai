@@ -1,5 +1,7 @@
 # Development guide
 
+Dependabot checks Python, browser-test, and GitHub Actions dependencies weekly. Grouped minor/patch updates can merge automatically only after every validation job passes the required CI gate on an up-to-date branch. Major upgrades and Docker updates require separate review. The automation executes no pull-request code with write permissions and explicitly refreshes CI and the public demo after a merge.
+
 ## Prerequisites
 
 - Python 3.11+

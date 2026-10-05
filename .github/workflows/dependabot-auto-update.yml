@@ -1,0 +1,169 @@
+name: Dependabot auto-update
+
+on:
+  pull_request_target:
+    branches: [main]
+    types: [opened, reopened, synchronize, ready_for_review]
+  schedule:
+    - cron: "23 4 * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: dependabot-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  enable-auto-merge:
+    if: >-
+      github.event_name == 'pull_request_target' &&
+      github.repository_owner == 'ManosTsagkos' &&
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      !github.event.pull_request.draft
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+      pages: write
+    steps:
+      - name: Reset previous auto-merge before revalidating
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: |
+          enabled=$(gh pr view "$PR_URL" --json autoMergeRequest --jq '.autoMergeRequest != null')
+          if [ "$enabled" = true ]; then
+            gh pr merge "$PR_URL" --disable-auto
+          fi
+
+      - name: Verify every commit belongs to Dependabot
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          unexpected=$(gh api --paginate "repos/$GH_REPO/pulls/$PR_NUMBER/commits" \
+            --jq '.[] | select(.author.login != "dependabot[bot]" or .commit.verification.verified != true) | .sha')
+          if [ -n "$unexpected" ]; then
+            echo "The pull request contains unverified or non-Dependabot commits."
+            exit 1
+          fi
+
+      - name: Read dependency metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
+        with:
+          github-token: ${{ github.token }}
+
+      - name: Enable merge after required checks pass
+        id: enable
+        if: >-
+          contains(fromJSON('["pip","uv","npm_and_yarn","github_actions"]'), steps.metadata.outputs.package-ecosystem) &&
+          contains(fromJSON('["version-update:semver-minor","version-update:semver-patch"]'), steps.metadata.outputs.update-type)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          DEPENDENCIES: ${{ steps.metadata.outputs.updated-dependencies-json }}
+        run: |
+          node -e '
+            const dependencies = JSON.parse(process.env.DEPENDENCIES);
+            const allowed = new Set(["version-update:semver-minor", "version-update:semver-patch"]);
+            if (!dependencies.length || dependencies.some(dependency => !allowed.has(dependency.updateType))) {
+              throw new Error("Every update in a group must be minor or patch.");
+            }
+          '
+          gh pr merge "$PR_URL" --auto --merge --match-head-commit "$PR_HEAD_SHA"
+
+      - name: Refresh public checks and demo after automatic merge
+        if: steps.enable.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          # GitHub-token merges may not emit a new push workflow. Dispatch
+          # the public checks/demo explicitly without storing a personal token.
+          for attempt in $(seq 1 150); do
+            pr=$(gh api "repos/$GH_REPO/pulls/$PR_NUMBER")
+            state=$(printf '%s' "$pr" | jq -r .state)
+            merged=$(printf '%s' "$pr" | jq -r .merged)
+            head=$(printf '%s' "$pr" | jq -r .head.sha)
+            if [ "$head" != "$PR_HEAD_SHA" ]; then
+              echo "The PR changed; its synchronize event will revalidate it."
+              exit 0
+            fi
+            if [ "$merged" = true ]; then
+              case "$GH_REPO" in
+                ManosTsagkos/RepoPilot)
+                  gh workflow run ci.yml --ref main
+                  gh api --method POST "repos/$GH_REPO/pages/builds" >/dev/null
+                  ;;
+                ManosTsagkos/traceaid-ai)
+                  gh workflow run ci.yml --ref main
+                  gh workflow run pages.yml --ref main
+                  ;;
+                ManosTsagkos/CryptoWorld)
+                  gh workflow run quality.yml --ref main
+                  gh workflow run portfolio-pages.yml --ref main
+                  ;;
+              esac
+              exit 0
+            fi
+            if [ "$state" = closed ]; then exit 0; fi
+            failed=$(gh api "repos/$GH_REPO/commits/$PR_HEAD_SHA/check-runs?per_page=100" \
+              --jq '.check_runs[] | select(.conclusion == "failure" or .conclusion == "cancelled" or .conclusion == "timed_out" or .conclusion == "action_required") | .name')
+            if [ -n "$failed" ]; then
+              echo "Validation failed; required branch checks keep the update unmerged."
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "Auto-merge remains enabled and is still waiting for required checks."
+
+  recover-missing-public-runs:
+    if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && github.repository_owner == 'ManosTsagkos'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: write
+      pages: write
+    steps:
+      - name: Dispatch only missing runs for the current main commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          head_sha=$(gh api "repos/$GH_REPO/git/ref/heads/main" --jq .object.sha)
+          ensure_workflow() {
+            current_runs=$(gh api "repos/$GH_REPO/actions/workflows/$1/runs?branch=main&per_page=30" | \
+              jq --arg expected "$head_sha" '[.workflow_runs[] | select(.head_sha == $expected)] | length')
+            if [ "$current_runs" = 0 ]; then
+              gh workflow run "$1" --ref main
+            fi
+          }
+          case "$GH_REPO" in
+            ManosTsagkos/RepoPilot)
+              ensure_workflow ci.yml
+              pages_commit=$(gh api "repos/$GH_REPO/pages/builds/latest" --jq .commit)
+              if [ "$pages_commit" != "$head_sha" ]; then
+                gh api --method POST "repos/$GH_REPO/pages/builds" >/dev/null
+              fi
+              ;;
+            ManosTsagkos/traceaid-ai)
+              ensure_workflow ci.yml
+              ensure_workflow pages.yml
+              ;;
+            ManosTsagkos/CryptoWorld)
+              ensure_workflow quality.yml
+              ensure_workflow portfolio-pages.yml
+              ;;
+          esac

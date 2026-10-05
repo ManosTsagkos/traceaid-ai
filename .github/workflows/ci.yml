@@ -146,3 +146,22 @@ jobs:
           "$RUNNER_TEMP/traceaid-wheel/bin/python" -m pip check
       - name: Verify packaged assets, API, CLI, and demo builder
         run: '"$RUNNER_TEMP/traceaid-wheel/bin/python" scripts/check-installed.py'
+
+  gate:
+    name: CI gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    if: always()
+    needs: [quality, tests, dependency-audit, browser, package]
+    steps:
+      - name: Require every validation job to succeed
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          node -e '
+            const jobs = JSON.parse(process.env.RESULTS);
+            if (!Object.keys(jobs).length || Object.values(jobs).some(job => job.result !== "success")) {
+              console.error("All required validation jobs must succeed.", jobs);
+              process.exit(1);
+            }
+          '
